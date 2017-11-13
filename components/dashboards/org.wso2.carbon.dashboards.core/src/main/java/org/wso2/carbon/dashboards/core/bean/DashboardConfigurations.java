@@ -21,9 +21,9 @@ package org.wso2.carbon.dashboards.core.bean;
 
 import org.wso2.carbon.config.annotation.Configuration;
 import org.wso2.carbon.config.annotation.Element;
+import org.wso2.carbon.database.query.manager.config.Queries;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Configuration bean class for dashboard configurations.
@@ -31,16 +31,16 @@ import java.util.Map;
 @Configuration(namespace = "wso2.dashboard", description = "WSO2 Dashboard configuration object")
 public class DashboardConfigurations {
     @Element(description = "Database query map")
-    private Map<String, Map<String, String>> queries = new HashMap<>();
+    private ArrayList<Queries> queries;
 
     public DashboardConfigurations() {
     }
 
-    public Map<String, Map<String, String>> getQueries() {
+    public ArrayList<Queries> getQueries() {
         return queries;
     }
 
-    public void setQueries(Map<String, Map<String, String>> queries) {
+    public void setQueries(ArrayList<Queries> queries) {
         this.queries = queries;
     }
 }

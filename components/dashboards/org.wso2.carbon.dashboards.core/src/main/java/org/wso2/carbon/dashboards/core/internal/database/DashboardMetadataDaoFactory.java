@@ -16,13 +16,22 @@
  * under the License.
  */
 
+
 package org.wso2.carbon.dashboards.core.internal.database;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.carbon.config.ConfigurationException;
 import org.wso2.carbon.config.provider.ConfigProvider;
 import org.wso2.carbon.dashboards.core.exception.DashboardException;
+import org.wso2.carbon.database.query.manager.exception.QueryMappingNotAvailableException;
 import org.wso2.carbon.datasource.core.api.DataSourceService;
 import org.wso2.carbon.datasource.core.exception.DataSourceException;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import javax.sql.DataSource;
 
 /**
@@ -33,6 +42,7 @@ import javax.sql.DataSource;
 public class DashboardMetadataDaoFactory {
 
     private static final String DATA_SOURCE_NAME_DASHBOARD = "WSO2_DASHBOARD_DB";
+    private static final Logger log = LoggerFactory.getLogger(DashboardMetadataDaoFactory.class);
 
     /**
      * Creates a new DAO.
@@ -45,12 +55,31 @@ public class DashboardMetadataDaoFactory {
     public static DashboardMetadataDao createDao(DataSourceService dataSourceService, ConfigProvider configProvider)
             throws DashboardException {
         DataSource dataSource;
+        QueryManager queryManager;
         try {
             dataSource = (DataSource) dataSourceService.getDataSource(DATA_SOURCE_NAME_DASHBOARD);
+            Connection connection = null;
+            try {
+                connection = dataSource.getConnection();
+                DatabaseMetaData databaseMeta = connection.getMetaData();
+                queryManager = new QueryManager(databaseMeta.getDatabaseProductName(),
+                        databaseMeta.getDatabaseProductVersion(), configProvider);
+            } catch (IOException | QueryMappingNotAvailableException |
+                    ConfigurationException | SQLException e) {
+                throw new DashboardException("Error in initializing database !", e);
+            } finally {
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException e) {
+                        log.warn("Database error. Could not close database connection. Continuing with " +
+                                "others. - " + e.getMessage(), e);
+                    }
+                }
+            }
         } catch (DataSourceException e) {
             throw new DashboardException("Cannot find data source named '" + DATA_SOURCE_NAME_DASHBOARD + "'.", e);
         }
-        QueryManager queryManager = new QueryManager(configProvider);
         return new DashboardMetadataDao(dataSource, queryManager);
     }
 }
