@@ -50,16 +50,22 @@ public class QueryManager {
     public QueryManager(String databaseType, String databaseVersion, ConfigProvider configProvider) throws
             QueryMappingNotAvailableException,
             ConfigurationException, IOException {
-        this.queries = readConfigs(databaseType, databaseVersion);
         this.deploymentConfigProvider = configProvider;
+        this.queries = readConfigs(databaseType, databaseVersion);
     }
 
     private Map<String, String> readConfigs(String databaseType, String databaseVersion) throws ConfigurationException,
             QueryMappingNotAvailableException, IOException {
         try {
-            DashboardConfigurations deploymentConfigurations = deploymentConfigProvider
-                    .getConfigurationObject(DashboardConfigurations.class);
-            ArrayList<Queries> deploymentQueries = deploymentConfigurations.getQueries();
+            DashboardConfigurations deploymentConfigurations;
+            ArrayList<Queries> deploymentQueries;
+            if (deploymentConfigProvider != null) {
+                deploymentConfigurations = deploymentConfigProvider
+                        .getConfigurationObject(DashboardConfigurations.class);
+                deploymentQueries = deploymentConfigurations.getQueries();
+            } else {
+                deploymentQueries = new ArrayList<>();
+            }
             ArrayList<Queries> componentQueries;
             URL url = this.getClass().getClassLoader().getResource("queries.yaml");
             if (url != null) {
